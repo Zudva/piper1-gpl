@@ -1,0 +1,53 @@
+# rsync ignore patterns for piper1-gpl
+# Excludes large/unnecessary files when syncing to RunPod
+
+# Git
+.git/
+.github/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+_skbuild/
+build/
+dist/
+
+# Training artifacts (sync separately or use S3)
+lightning_logs/
+*.ckpt
+*.onnx
+
+# Test outputs
+test_*.wav
+test_*.json
+test_*.srt
+test_*.vtt
+test_*.tsv
+test_*.txt
+test_variations/
+test_variations_ru/
+
+# Local configs
+.env
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+*.so
+*.c
+espeak-ng-data/
+
+# Docker
+piper-train-latest.tar.gz
+
+# Temporary
+tmp/
+.DS_Store
