@@ -17,6 +17,7 @@ pip install piper-tts
 * 🔧 [C/C++ API][libpiper]
 * 🏋️ [Training new voices][training]
 * 🛠️ [Building manually][building]
+* ☁️ [Cloud deployment (RunPod/ImmersCloud)][deployment]
 
 ---
 
@@ -50,3 +51,4 @@ People/projects using Piper:
 [samples]: https://rhasspy.github.io/piper-samples
 [demo]: https://rhasspy.github.io/piper-samples/demo.html
 [libpiper]: https://github.com/OHF-Voice/piper1-gpl/tree/main/libpiper
+[deployment]: https://github.com/Zudva/piper1-gpl/blob/main/docs/DEPLOYMENT.md
