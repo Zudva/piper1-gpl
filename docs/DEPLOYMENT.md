@@ -229,6 +229,45 @@ fab sync-to-immerscloud
 fab start-training-immerscloud --batch-size=64
 ```
 
+⚠️ **ImmersCloud RAM limitations**: 32GB (1 GPU) / 44GB (4 GPU). См. [LOW_RAM_OPTIMIZATION.md](LOW_RAM_OPTIMIZATION.md) для оптимизации.
+
+**Рекомендуемая конфигурация для ImmersCloud:**
+```bash
+# 1 GPU + 32GB RAM
+export NUM_DEVICES=1
+export BATCH_SIZE=24
+export NUM_WORKERS=1
+
+# 4 GPU + 44GB RAM
+export NUM_DEVICES=4
+export BATCH_SIZE=12
+export NUM_WORKERS=1
+export ACCUM=2  # эффективный BS = 12 × 4 × 2 = 96
+```
+
+---
+
+## Оптимизация для low-RAM серверов
+
+Если на сервере мало оперативной памяти (32-48 GB), критически важно:
+
+1. **Установите `NUM_WORKERS=1`** (экономит 8-12 GB RAM)
+2. **Уменьшите `BATCH_SIZE`** (16 вместо 64 для multi-GPU)
+3. **Используйте `ACCUM`** для компенсации малого batch size
+
+**Детальное руководство:** [LOW_RAM_OPTIMIZATION.md](LOW_RAM_OPTIMIZATION.md)
+
+**Быстрый расчёт RAM:**
+```
+RAM на GPU процесс = Total RAM / NUM_DEVICES
+Нужно минимум: 10-12 GB на процесс
+```
+
+**Примеры:**
+- 32 GB / 1 GPU = 32 GB/процесс ✅ (BS=24, NW=1)
+- 44 GB / 4 GPU = 11 GB/процесс ⚠️ (BS=12-16, NW=1 обязательно!)
+- 64 GB / 4 GPU = 16 GB/процесс ✅ (BS=24, NW=1-2)
+
 ---
 
 ## Работа с Docker-образом

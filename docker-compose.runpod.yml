@@ -13,10 +13,14 @@ services:
       # Настройки обучения (при необходимости переопределяйте через env/CLI)
       - CKPT_PATH=/workspace/piper1-gpl/lightning_logs/version_3/checkpoints/epoch=749-step=355500-val_loss=27.5963.ckpt
       - DATA_DIR=/data
-      - BATCH_SIZE=24          # пресет для H100: 24/40/64 — варьируйте при запуске
+      # Optimized for L40S (48GB VRAM, 62GB RAM) - fastest training
+      # Other GPUs: RTX 4090 (BS=32), RTX 5090 (BS=56), L4 (BS=40)
+      - BATCH_SIZE=80          # L40S optimized: 80-96 for maximum speed
+      - NUM_WORKERS=4          # L40S has 62GB RAM - can handle 4 workers
+      - NUM_DEVICES=1          # number of GPUs (1 for single GPU, 2/4 for multi-GPU)
       - MAX_EPOCHS=10000
-      - PRECISION=16-mixed     # 16-mixed (cuFFT doesn't support bf16)
-      - ACCUM=1                # аккумуляция градиента: 1 (нет), 2 — если надо ужать память
+      - PRECISION=16-mixed     # 16-mixed (stable) or bf16-mixed (faster on Blackwell/Hopper)
+      - ACCUM=1                # gradient accumulation: 1 (default), 2+ if OOM
       # S3 sync configuration
       - ENABLE_S3_SYNC=1
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
@@ -50,9 +54,11 @@ services:
         --data.cache_dir=${DATA_DIR}/.cache \
         --data.espeak_voice=ru \
         --data.batch_size=${BATCH_SIZE} \
-        --trainer.max_epochs=${MAX_EPOCHS} \
-        --trainer.check_val_every_n_epoch=1 \
-        --trainer.strategy=ddp_find_unused_parameters_true \
+        --data.num_workers=${NUM_WORKERS}
+        --trainer.max_epochs=${MAX_EPOCHS}
+        --trainer.check_val_every_n_epoch=1
+        --trainer.devices=${NUM_DEVICES}
+        --trainer.strategy=$([ "${NUM_DEVICES}" = "1" ] && echo "auto" || echo "ddp_find_unused_parameters_true")
         --trainer.precision=${PRECISION} \
         --trainer.accumulate_grad_batches=${ACCUM} \
         --trainer.devices=1 \
