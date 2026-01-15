@@ -15,7 +15,13 @@ services:
       # Training config (override via env or CLI)
       - CKPT_PATH=/workspace/piper1-gpl/lightning_logs/version_3/checkpoints/epoch=749-step=355500-val_loss=27.5963.ckpt
       - DATA_DIR=/data
-      - BATCH_SIZE=64          # H100/A100: 64-96, RTX 4090: 24-32
+      # ImmersCloud RAM limitations: 32GB (1 GPU) / 44GB (4 GPU)
+      # Recommended configs:
+      # 1 GPU + 32GB RAM: BATCH_SIZE=24, NUM_WORKERS=1, NUM_DEVICES=1
+      # 4 GPU + 44GB RAM: BATCH_SIZE=16, NUM_WORKERS=1, NUM_DEVICES=4 (effective BS=64)
+      - BATCH_SIZE=16          # per-GPU batch size (conservative for low RAM)
+      - NUM_WORKERS=1          # DataLoader workers (1=minimal RAM usage)
+      - NUM_DEVICES=1          # 1 or 4 GPU (adjust based on instance)
       - MAX_EPOCHS=10000
       - PRECISION=16-mixed     # 16-mixed (cuFFT compatible) or bf16-mixed (H100 only)
       - ACCUM=1                # gradient accumulation: 1 (no accum), 2+ (save memory)
@@ -55,9 +61,11 @@ services:
         --data.cache_dir=${DATA_DIR}/.cache
         --data.espeak_voice=ru
         --data.batch_size=${BATCH_SIZE}
+        --data.num_workers=${NUM_WORKERS}
         --trainer.max_epochs=${MAX_EPOCHS}
         --trainer.check_val_every_n_epoch=1
-        --trainer.strategy=ddp_find_unused_parameters_true
+        --trainer.devices=${NUM_DEVICES}
+        --trainer.strategy=$([ "${NUM_DEVICES}" = "1" ] && echo "auto" || echo "ddp_find_unused_parameters_true")
         --trainer.precision=${PRECISION}
         --trainer.accumulate_grad_batches=${ACCUM}
         --trainer.devices=1
