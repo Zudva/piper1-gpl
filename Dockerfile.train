@@ -1,0 +1,52 @@
+# Training-ready image for Piper on CUDA (RunPod / local GPUs)
+# Base: NVIDIA PyTorch 24.04 (CUDA 12.4, PyTorch 2.3.1)
+FROM nvcr.io/nvidia/pytorch:24.04-py3
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_BREAK_SYSTEM_PACKAGES=1 \
+    TORCH_CUDA_ARCH_LIST="" \
+    PYTHONUNBUFFERED=1 \
+    TOKENIZERS_PARALLELISM=false \
+    OMP_NUM_THREADS=1
+
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    ninja-build \
+    espeak-ng \
+    git \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace/piper1-gpl
+
+# Copy only metadata first for better caching
+COPY pyproject.toml setup.py CMakeLists.txt MANIFEST.in README.md ./
+COPY src/piper ./src/piper
+COPY build_monotonic_align.sh ./
+
+# Install training dependencies and S3 tools
+RUN pip install --upgrade pip \
+    && pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu121 \
+    && pip install scikit-build \
+    && pip install -e .[train] \
+    && pip install boto3 s3fs awscli
+
+# Build monotonic_align extension
+RUN ./build_monotonic_align.sh && python setup.py build_ext --inplace
+
+# Runtime env defaults (can override at run)
+ENV CHECKPOINT="" \
+    BATCH_SIZE=16 \
+    PRECISION=16-mixed \
+    ACCUM=1 \
+    MAX_EPOCHS=10000 \
+    ENABLE_S3_SYNC=1 \
+    S3_PREFIX=piper-training/felix_mirage \
+    DATA_DIR=/data
+
+# Entry script (uses existing piper.train CLI)
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["echo 'Set command via docker run ...' && sleep 1"]

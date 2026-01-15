@@ -4,13 +4,10 @@
 !README.md
 !CMakeLists.txt
 !MANIFEST.in
-!src/piper/*.py
-!src/piper/espeakbridge.pyi
-!src/piper/espeakbridge.c
-!src/piper/tashkeel/*.py
-!src/piper/tashkeel/*.json
-!src/piper/tashkeel/model.onnx
-!src/piper/train/__init__.py
+!src/piper/**
+!build_monotonic_align.sh
+!Dockerfile.train
+!script/s3_sync.sh
 
 !script/setup
 !script/dev_build

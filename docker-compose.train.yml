@@ -6,24 +6,77 @@ services:
     runtime: nvidia
     network_mode: host
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=0,1
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
       - DEBIAN_FRONTEND=noninteractive
+      - CHECKPOINT=lightning_logs/version_3/checkpoints/epoch=749-step=355500-val_loss=27.5963.ckpt
+      - BATCH_SIZE=16
+      - PRECISION=16-mixed
+      - ACCUM=1
+      - MAX_EPOCHS=10000
     ipc: host
     working_dir: /workspace/piper1-gpl
     volumes:
       - .:/workspace/piper1-gpl
-      - D:\git\nik-v-local-talking-llm\actors\felix_mirage:/data
-      - E:\git\piper\checkpoints:/checkpoints:ro
-    command: >
-      bash -lc "\
+      - /media/zudva/git1/git/piper-training/datasets/felix_mirage:/data
+      - /media/zudva/git1/git/piper/checkpoints:/checkpoints:ro
+      - piper-venv:/tmp/piper-venv
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        LOG_FILE=/workspace/piper1-gpl/logs/install_and_export.log
+        mkdir -p /workspace/piper1-gpl/logs
+        : >"$$LOG_FILE"
+        echo "Logging to $$LOG_FILE"
+        exec > >(tee -a "$$LOG_FILE") 2>&1
+
         apt-get update && \
         apt-get install -y build-essential cmake ninja-build espeak-ng python3-venv && \
-        python3 -m venv /tmp/piper-venv && \
-        source /tmp/piper-venv/bin/activate && \
-        pip install --upgrade pip && \
-        pip install -q -e .[train] && \
+        if [ ! -f "/tmp/piper-venv/bin/activate" ]; then \
+          echo "Creating new Python virtual environment..." && \
+          python3 -m venv /tmp/piper-venv && \
+          source /tmp/piper-venv/bin/activate && \
+          pip install --upgrade pip && \
+          pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu121 && \
+          pip install scikit-build && \
+          pip install -e .[train]; \
+        else \
+          echo "Using existing Python virtual environment..." && \
+          source /tmp/piper-venv/bin/activate && \
+          pip install --upgrade pip && \
+          pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu121 && \
+          pip install --upgrade -e .[train]; \
+        fi && \
         ./build_monotonic_align.sh && \
         python3 setup.py build_ext --inplace && \
-        python3 -m piper.train fit --data.voice_name felix_mirage --data.csv_path /data/datasets/elevenlabs/zWSsRd3J6WyZFl12aGMB/metadata.csv --data.audio_dir /data/datasets/elevenlabs/zWSsRd3J6WyZFl12aGMB/wavs --model.sample_rate 44100 --data.espeak_voice ru --data.cache_dir /data/.cache --data.config_path /data/felix_mirage.json --data.batch_size 28 --trainer.max_epochs 10000 --trainer.check_val_every_n_epoch 1
-      "
+        if [ "$EXPORT_ONLY" = "1" ]; then \
+          export PYTORCH_ONNX_USE_EXPERIMENTAL_EXPORTER=0 && \
+          python3 -m piper.train.export_onnx --checkpoint "$CHECKPOINT" --output-file "$OUTPUT_FILE"; \
+        else \
+          CHECKPOINT="$${CHECKPOINT:-lightning_logs/version_3/checkpoints/epoch=749-step=355500-val_loss=27.5963.ckpt}" && \
+          MAX_EPOCHS="$${MAX_EPOCHS:-10000}" && \
+          echo "=== Starting training ===" && \
+          echo "Checkpoint: $$CHECKPOINT" && \
+          echo "Max epochs: $$MAX_EPOCHS" && \
+          CUDA_VISIBLE_DEVICES=0,1 python3 -m piper.train fit \
+            --ckpt_path="$$CHECKPOINT" \
+            --data.config_path=/data/config.json \
+            --data.voice_name=felix_mirage \
+            --data.csv_path=/data/metadata_2col.csv \
+            --data.audio_dir=/data/wavs \
+            --model.sample_rate=22050 \
+            --data.espeak_voice=ru \
+            --data.cache_dir=/data/.cache \
+            --data.batch_size=$${BATCH_SIZE:-16} \
+            --trainer.precision=$${PRECISION:-16-mixed} \
+            --trainer.accumulate_grad_batches=$${ACCUM:-1} \
+            --trainer.max_epochs=$$MAX_EPOCHS \
+            --trainer.check_val_every_n_epoch=1 \
+            --trainer.strategy=ddp_find_unused_parameters_true \
+            --trainer.devices=2 \
+            --trainer.accelerator=gpu; \
+        fi
+
+volumes:
+  piper-venv:
