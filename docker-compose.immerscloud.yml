@@ -1,0 +1,68 @@
+version: "3.9"
+services:
+  train:
+    build:
+      context: .
+      dockerfile: Dockerfile.train
+    image: ghcr.io/zudva/piper-train:latest
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - OMP_NUM_THREADS=1
+      - TOKENIZERS_PARALLELISM=false
+      - PYTHONUNBUFFERED=1
+      # Training config (override via env or CLI)
+      - CKPT_PATH=/workspace/piper1-gpl/lightning_logs/version_3/checkpoints/epoch=749-step=355500-val_loss=27.5963.ckpt
+      - DATA_DIR=/data
+      - BATCH_SIZE=64          # H100/A100: 64-96, RTX 4090: 24-32
+      - MAX_EPOCHS=10000
+      - PRECISION=16-mixed     # 16-mixed (cuFFT compatible) or bf16-mixed (H100 only)
+      - ACCUM=1                # gradient accumulation: 1 (no accum), 2+ (save memory)
+      # S3 sync configuration
+      - ENABLE_S3_SYNC=1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-ru-1-hot}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_PREFIX=${S3_PREFIX:-piper-training/felix_mirage}
+    volumes:
+      # Code and logs with checkpoints (persist on host)
+      - .:/workspace/piper1-gpl
+      - ./lightning_logs:/workspace/piper1-gpl/lightning_logs
+      # Dataset felix_mirage (map to actual path on ImmersCloud)
+      - /mnt/data/felix_mirage:/data
+    working_dir: /workspace/piper1-gpl
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: >
+      bash -c "
+      set -euo pipefail &&
+      echo '=== Piper Training on ImmersCloud ===' &&
+      source /workspace/piper1-gpl/.env 2>/dev/null || echo 'No .env found, using env vars' &&
+      python -m piper.train fit
+        --ckpt_path=${CKPT_PATH}
+        --data.config_path=${DATA_DIR}/config.json
+        --data.voice_name=felix_mirage
+        --data.csv_path=${DATA_DIR}/metadata_2col.csv
+        --data.audio_dir=${DATA_DIR}/wavs
+        --data.cache_dir=${DATA_DIR}/.cache
+        --data.espeak_voice=ru
+        --data.batch_size=${BATCH_SIZE}
+        --trainer.max_epochs=${MAX_EPOCHS}
+        --trainer.check_val_every_n_epoch=1
+        --trainer.strategy=ddp_find_unused_parameters_true
+        --trainer.precision=${PRECISION}
+        --trainer.accumulate_grad_batches=${ACCUM}
+        --trainer.devices=1
+        --trainer.accelerator=gpu
+      "
+    stop_signal: SIGTERM
+    stop_grace_period: 90s
+    restart: unless-stopped

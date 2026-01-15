@@ -10,6 +10,12 @@ RUNPOD_HOST = os.getenv("RUNPOD_HOST")  # e.g. ssh.runpod.io
 RUNPOD_PORT = os.getenv("RUNPOD_PORT", "22")
 RUNPOD_USER = os.getenv("RUNPOD_USER", "root")
 RUNPOD_POD_ID = os.getenv("RUNPOD_POD_ID")  # e.g. abc123xyz
+
+# ImmersCloud SSH config (set via env or override in commands)
+IMMERSCLOUD_HOST = os.getenv("IMMERSCLOUD_HOST")
+IMMERSCLOUD_PORT = os.getenv("IMMERSCLOUD_PORT", "22")
+IMMERSCLOUD_USER = os.getenv("IMMERSCLOUD_USER", "root")
+
 REMOTE_DIR = "/workspace/piper1-gpl"
 
 
@@ -183,3 +189,117 @@ def start_training(c, host=None, port=None, user=None, batch_size=16, precision=
         conn.run(cmd)
     
     print("✓ Training started. Monitor with: fab ssh-runpod --cmd='docker logs -f piper-train'")
+
+
+# ====== ImmersCloud commands (same as RunPod but with IMMERSCLOUD_* env vars) ======
+
+@task
+def sync_to_immerscloud(c, host=None, port=None, user=None):
+    """Rsync local code to ImmersCloud instance."""
+    host = host or IMMERSCLOUD_HOST
+    port = port or IMMERSCLOUD_PORT
+    user = user or IMMERSCLOUD_USER
+    
+    if not host:
+        raise SystemExit("Set IMMERSCLOUD_HOST env var or pass --host")
+    
+    ssh_target = f"{user}@{host}"
+    ssh_opts = f"-p {port}"
+    
+    print(f"📤 Syncing to ImmersCloud {ssh_target}:{REMOTE_DIR}")
+    
+    rsync_cmd = (
+        f"rsync -avz --delete "
+        f"--exclude-from=.rsyncignore "
+        f"-e 'ssh {ssh_opts}' "
+        f"./ {ssh_target}:{REMOTE_DIR}/"
+    )
+    c.run(rsync_cmd)
+    print("✓ Sync complete")
+
+
+@task
+def sync_from_immerscloud(c, host=None, port=None, user=None, path="lightning_logs"):
+    """Rsync checkpoints/logs from ImmersCloud back to local."""
+    host = host or IMMERSCLOUD_HOST
+    port = port or IMMERSCLOUD_PORT
+    user = user or IMMERSCLOUD_USER
+    
+    if not host:
+        raise SystemExit("Set IMMERSCLOUD_HOST env var or pass --host")
+    
+    ssh_target = f"{user}@{host}"
+    ssh_opts = f"-p {port}"
+    
+    print(f"📥 Syncing {path} from ImmersCloud {ssh_target}:{REMOTE_DIR}")
+    
+    rsync_cmd = (
+        f"rsync -avz "
+        f"-e 'ssh {ssh_opts}' "
+        f"{ssh_target}:{REMOTE_DIR}/{path} ./"
+    )
+    c.run(rsync_cmd)
+    print("✓ Sync complete")
+
+
+@task
+def ssh_immerscloud(c, host=None, port=None, user=None, cmd=None):
+    """SSH into ImmersCloud instance."""
+    host = host or IMMERSCLOUD_HOST
+    port = port or IMMERSCLOUD_PORT
+    user = user or IMMERSCLOUD_USER
+    
+    if not host:
+        raise SystemExit("Set IMMERSCLOUD_HOST env var or pass --host")
+    
+    ssh_cmd = f"ssh -p {port} {user}@{host}"
+    if cmd:
+        ssh_cmd += f' "{cmd}"'
+    
+    c.run(ssh_cmd, pty=True)
+
+
+@task
+def setup_immerscloud(c, host=None, port=None, user=None):
+    """Initial setup on ImmersCloud: run startup script."""
+    host = host or IMMERSCLOUD_HOST
+    port = port or IMMERSCLOUD_PORT
+    user = user or IMMERSCLOUD_USER
+    
+    if not host:
+        raise SystemExit("Set IMMERSCLOUD_HOST env var or pass --host")
+    
+    print("📦 Setting up ImmersCloud environment...")
+    
+    # First sync the code
+    sync_to_immerscloud(c, host=host, port=port, user=user)
+    
+    # Then run startup script
+    with Connection(host=host, port=int(port), user=user) as conn:
+        conn.run(f"cd {REMOTE_DIR} && ./script/immerscloud_startup.sh")
+    
+    print("✓ ImmersCloud setup complete")
+
+
+@task
+def start_training_immerscloud(c, host=None, port=None, user=None, batch_size=64, precision="16-mixed"):
+    """Start training on ImmersCloud."""
+    host = host or IMMERSCLOUD_HOST
+    port = port or IMMERSCLOUD_PORT
+    user = user or IMMERSCLOUD_USER
+    
+    if not host:
+        raise SystemExit("Set IMMERSCLOUD_HOST env var or pass --host")
+    
+    cmd = (
+        f"cd {REMOTE_DIR} && "
+        f"ENABLE_S3_SYNC=1 BATCH_SIZE={batch_size} PRECISION={precision} "
+        f"docker compose -f docker-compose.immerscloud.yml up -d"
+    )
+    
+    print(f"🚀 Starting training on ImmersCloud (batch={batch_size}, precision={precision})")
+    
+    with Connection(host=host, port=int(port), user=user) as conn:
+        conn.run(cmd)
+    
+    print("✓ Training started on ImmersCloud")
