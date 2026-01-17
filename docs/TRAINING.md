@@ -43,6 +43,11 @@ The first column is the name of the audio file (any format supported by [librosa
 
 The second column is the text that will be passed to [espeak-ng][] for phonemization (similar to `espeak-ng --ipa=3`).
 
+## Dataset Validation (100%)
+Before training, dataset **must** pass full validation per policy in
+[reports/DATA_VALIDATION_POLICY.md](../reports/DATA_VALIDATION_POLICY.md).
+Use [reports/VALIDATION_TEMPLATE.md](../reports/VALIDATION_TEMPLATE.md) for the final report.
+
 Run the training script:
 
 ``` sh
