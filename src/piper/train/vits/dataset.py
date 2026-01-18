@@ -274,6 +274,11 @@ class VitsDataModule(L.LightningDataModule):
         _LOGGER.info("Processed %s utterance(s)", num_utterances)
 
     def setup(self, stage: str) -> None:
+        # Load config if not already loaded (e.g., on non-rank-0 processes)
+        if self.piper_config is None:
+            with open(self.config_path, "r", encoding="utf-8") as config_file:
+                self.piper_config = PiperConfig.from_dict(json.load(config_file))
+        
         assert self.piper_config is not None
 
         all_utts: list[CachedUtterance] = []

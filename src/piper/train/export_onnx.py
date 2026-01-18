@@ -88,7 +88,7 @@ def main() -> None:
     scales = torch.FloatTensor([0.667, 1.0, 0.8])
     dummy_input = (sequences, sequence_lengths, scales, sid)
 
-    # Export
+    # Export using legacy exporter to avoid torch.export symbolic guards
     torch.onnx.export(
         model=model_g,
         args=dummy_input,

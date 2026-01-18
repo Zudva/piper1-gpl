@@ -54,6 +54,7 @@ setup(
             "jsonargparse[signatures]>=4.27.7",
             "pathvalidate>=3,<4",
             "onnx>=1,<2",
+            "onnxscript>=0.1",
             "pysilero-vad>=2.1,<3",
             "cython>=3,<4",
             "librosa<1",

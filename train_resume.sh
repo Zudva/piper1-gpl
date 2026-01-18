@@ -3,7 +3,7 @@ set -e
 
 # Настройки
 CHECKPOINT="${1:-lightning_logs/version_2/checkpoints/epoch=426-step=202398.ckpt}"
-DATA_DIR="/media/zudva/git1/git/piper-training/datasets/felix_mirage"
+DATA_DIR="${DATA_DIR:-/workspace/datasets/felix_mirage}"
 MAX_EPOCHS="${2:-10000}"
 
 echo "=== Продолжение обучения Piper TTS ==="
@@ -18,8 +18,8 @@ if [ -z "$VIRTUAL_ENV" ]; then
     source .venv/bin/activate
 fi
 
-# Запуск обучения
-python -m piper.train fit \
+# Запуск обучения (используем только RTX 3090: GPU 0,1)
+CUDA_VISIBLE_DEVICES=0,1 python -m piper.train fit \
     --ckpt_path="$CHECKPOINT" \
     --data.config_path="$DATA_DIR/config.json" \
     --data.voice_name=felix_mirage \
