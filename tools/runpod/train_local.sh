@@ -1,14 +1,20 @@
 #!/bin/bash
 set -e
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$REPO_ROOT"
+
 echo "=== Activating virtual environment ==="
-source /workspace/piper1-gpl/.venv/bin/activate
+if [ -f ".venv/bin/activate" ]; then
+  # shellcheck disable=SC1091
+  source .venv/bin/activate
+fi
 
 echo "=== Checking GPUs ==="
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
 echo "=== Creating test dataset directory ==="
-TEST_DATA_DIR="/workspace/piper1-gpl/test_dataset"
+TEST_DATA_DIR="$REPO_ROOT/test_dataset"
 mkdir -p "$TEST_DATA_DIR/wavs"
 mkdir -p "$TEST_DATA_DIR/.cache"
 

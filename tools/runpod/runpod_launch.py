@@ -8,6 +8,14 @@ import subprocess
 from pathlib import Path
 import json
 
+
+def find_repo_root() -> Path:
+    here = Path(__file__).resolve()
+    for parent in [here.parent, *here.parents]:
+        if (parent / "pyproject.toml").exists() or (parent / "setup.py").exists():
+            return parent
+    return here.parent
+
 def run_cmd(cmd):
     """Run command and return output"""
     try:
@@ -117,7 +125,8 @@ def start_training(dataset_path, checkpoint=None):
     if not dataset_path:
         print("✗ No dataset found - creating test dataset")
         # Use start_training.py to create test dataset
-        subprocess.run([sys.executable, "start_training.py"], check=True)
+        repo_root = find_repo_root()
+        subprocess.run([sys.executable, str(repo_root / "tools" / "runpod" / "start_training.py")], check=True)
         return
     
     # Build training command
@@ -171,17 +180,17 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    # Change to project directory (portable)
-    project_dir = Path(__file__).resolve().parent
-    os.chdir(project_dir)
+    # Change to repo root (portable)
+    repo_root = find_repo_root()
+    os.chdir(repo_root)
     
     # Activate venv if exists
-    venv_activate = Path(".venv/bin/activate")
+    venv_activate = repo_root / ".venv/bin/activate"
     if venv_activate.exists():
         # Source it by modifying PATH
-        venv_bin = str(Path(".venv/bin").absolute())
+        venv_bin = str((repo_root / ".venv/bin").absolute())
         os.environ["PATH"] = f"{venv_bin}:{os.environ.get('PATH', '')}"
-        os.environ["VIRTUAL_ENV"] = str(Path(".venv").absolute())
+        os.environ["VIRTUAL_ENV"] = str((repo_root / ".venv").absolute())
     
     check_environment()
     dataset_path = args.dataset or check_dataset()

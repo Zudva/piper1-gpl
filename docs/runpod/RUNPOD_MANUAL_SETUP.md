@@ -78,8 +78,8 @@ EOF
 Если вы **уже внутри training-контейнера** (типичный сценарий, Docker-in-Docker недоступен), запускайте напрямую:
 
 ```bash
-bash check.sh
-bash train.sh
+bash tools/runpod/check.sh
+bash tools/runpod/train.sh
 ```
 
 Если у вас есть доступ к Docker daemon (не внутри контейнера), тогда можно использовать docker-compose сценарии из `docs/DEPLOYMENT.md`.

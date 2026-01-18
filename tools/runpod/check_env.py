@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
 """Quick environment check"""
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+
+def find_repo_root() -> Path:
+    here = Path(__file__).resolve()
+    for parent in [here.parent, *here.parents]:
+        if (parent / "pyproject.toml").exists() or (parent / "setup.py").exists():
+            return parent
+    return here.parent
+
 
 print("QUICK ENVIRONMENT CHECK")
 print("="*60)
@@ -35,21 +45,24 @@ except ImportError:
 
 # Project structure
 print(f"\nProject structure:")
-piper_dir = Path("/workspace/piper1-gpl")
+repo_root = find_repo_root()
+piper_dir = repo_root
 print(f"  piper1-gpl: {'✓' if piper_dir.exists() else '✗'}")
 print(f"  .venv: {'✓' if (piper_dir / '.venv').exists() else '✗'}")
 print(f"  lightning_logs: {'✓' if (piper_dir / 'lightning_logs').exists() else '✗'}")
 
 # Dataset locations to check
 print(f"\nDataset check:")
+env_dataset = os.environ.get("DATA_DIR") or os.environ.get("PIPER_DATASET_DIR")
 dataset_paths = [
+    env_dataset,
     "/workspace/datasets/felix_mirage",
     "/data/felix_mirage", 
     "/data",
-    str(Path.cwd() / "datasets" / "felix_mirage")
+    str(repo_root / "datasets" / "felix_mirage")
 ]
 
-for path in dataset_paths:
+for path in [p for p in dataset_paths if p]:
     p = Path(path)
     if p.exists():
         print(f"  ✓ {path}")
@@ -73,6 +86,6 @@ else:
 
 print("\n" + "="*60)
 print("\nTo start training:")
-print("  python runpod_launch.py")
+print("  python tools/runpod/runpod_launch.py")
 print("\nOr direct command:")
-print("  python start_training.py --batch-size 80 --num-gpus 2")
+print("  python tools/runpod/start_training.py --batch-size 80 --num-gpus 2")

@@ -4,7 +4,7 @@
 ```bash
 cd /workspace/piper1-gpl
 source .venv/bin/activate
-python check_env.py
+python tools/runpod/check_env.py
 ```
 
 ## 2️⃣ Запуск обучения
@@ -13,7 +13,7 @@ python check_env.py
 ```bash
 cd /workspace/piper1-gpl
 source .venv/bin/activate
-python runpod_launch.py
+python tools/runpod/runpod_launch.py
 ```
 
 ## ✅ Dataset validation (100%) before training
@@ -28,17 +28,17 @@ python script/validate_dataset_full.py \
 
 ### Вариант B: С возобновлением
 ```bash
-python runpod_launch.py --resume
+python tools/runpod/runpod_launch.py --resume
 ```
 
 ### Вариант C: Только проверка
 ```bash
-python runpod_launch.py --check-only
+python tools/runpod/runpod_launch.py --check-only
 ```
 
 ### Вариант D: С явным указанием путей
 ```bash
-python runpod_launch.py \
+python tools/runpod/runpod_launch.py \
   --dataset /workspace/datasets/felix_mirage \
   --checkpoint lightning_logs/version_3/checkpoints/epoch=749-step=355500-val_loss=27.5963.ckpt
 ```
@@ -71,7 +71,7 @@ python -m piper.train fit \
 ```bash
 cd /workspace/piper1-gpl
 source .venv/bin/activate
-python test_model.py
+python tools/inference/test_model.py
 ```
 
 ## 5️⃣ Мониторинг

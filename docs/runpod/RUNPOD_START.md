@@ -8,13 +8,13 @@
 
 ```bash
 # 1. Проверка окружения
-bash check.sh
+bash tools/runpod/check.sh
 
 # 2. Запуск обучения
-bash train.sh
+bash tools/runpod/train.sh
 
 # Или с возобновлением
-bash train.sh --resume
+bash tools/runpod/train.sh --resume
 ```
 
 ## 📋 Что уже установлено
@@ -29,29 +29,29 @@ bash train.sh --resume
 
 ### Проверка окружения
 ```bash
-python check_env.py
+python tools/runpod/check_env.py
 ```
 
 ### Запуск обучения
 ```bash
 # Автоматический поиск датасета и чекпоинта
-python runpod_launch.py
+python tools/runpod/runpod_launch.py
 
 # С возобновлением от последнего чекпоинта
-python runpod_launch.py --resume
+python tools/runpod/runpod_launch.py --resume
 
 # Только проверка (без обучения)
-python runpod_launch.py --check-only
+python tools/runpod/runpod_launch.py --check-only
 
 # С явным указанием путей
-python runpod_launch.py \
+python tools/runpod/runpod_launch.py \
   --dataset /workspace/datasets/felix_mirage \
   --checkpoint lightning_logs/version_3/checkpoints/epoch=749.ckpt
 ```
 
 ### Тест модели
 ```bash
-python test_model.py
+python tools/inference/test_model.py
 ```
 
 ### Мониторинг
@@ -65,7 +65,7 @@ tensorboard --logdir=lightning_logs --host 0.0.0.0
 
 ## 📁 Где искать датасет
 
-Скрипт `runpod_launch.py` автоматически проверит:
+Скрипт `tools/runpod/runpod_launch.py` автоматически проверит:
 - `/workspace/datasets/felix_mirage`
 - `/data/felix_mirage`
 - `/data`
@@ -86,10 +86,11 @@ tensorboard --logdir=lightning_logs --host 0.0.0.0
 
 **Терминал не отвечает?**
 - Используйте Python скрипты вместо bash команд
-- `python check_env.py` вместо `ls`
+- `python tools/runpod/check_env.py` вместо `ls`
 
 **Dataset not found?**
 - Проверьте пути в `check_env.py`
+- Проверьте пути в `tools/runpod/check_env.py`
 - Убедитесь, что volume смонтирован
 
 **Out of Memory?**

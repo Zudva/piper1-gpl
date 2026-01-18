@@ -48,7 +48,7 @@ aws s3 ls s3://$S3_BUCKET/ --endpoint-url=$AWS_ENDPOINT_URL --region=$AWS_DEFAUL
 
 ```bash
 export ENABLE_S3_SYNC=1
-docker compose -f docker-compose.train.yml up
+docker compose -f deploy/compose/docker-compose.train.yml up
 ```
 
 ---
@@ -219,7 +219,7 @@ ENABLE_S3_SYNC=1
 
 # 2. Укажите путь в CHECKPOINT
 export CHECKPOINT=checkpoints/epoch=749-step=355500-val_loss=27.5963.ckpt
-docker compose -f docker-compose.train.yml up
+docker compose -f deploy/compose/docker-compose.train.yml up
 ```
 
 ---
@@ -382,7 +382,7 @@ docker logs piper1-gpl-train-1 | grep S3
 
 # 2. Запустите обучение с автосинхронизацией
 export ENABLE_S3_SYNC=1
-docker compose -f docker-compose.train.yml up
+docker compose -f deploy/compose/docker-compose.train.yml up
 
 # 3. Чекпоинты будут автоматически загружаться в S3 каждые 5000 шагов
 ```
@@ -408,7 +408,7 @@ PRECISION=16-mixed
 EOF
 
 # 3. Запустите обучение (автоматически скачает последний чекпоинт)
-docker compose -f docker-compose.runpod.yml up -d
+docker compose -f deploy/compose/docker-compose.runpod.yml up -d
 
 # 4. Мониторьте логи
 docker logs -f piper1-gpl-train-1

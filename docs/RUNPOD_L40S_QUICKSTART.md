@@ -128,7 +128,7 @@ fab start-training --batch-size=80
 # Вариант 2: Прямо в pod
 fab ssh-runpod
 
-docker compose -f docker-compose.runpod.yml up -d
+docker compose -f deploy/compose/docker-compose.runpod.yml up -d
 
 # Проверить логи
 docker logs -f piper1-gpl-train-1
@@ -186,14 +186,14 @@ tensorboard --logdir /workspace/piper1-gpl/lightning_logs --host 0.0.0.0 --port 
 ### Остановка:
 
 ```bash
-fab ssh-runpod --cmd="docker compose -f /workspace/piper1-gpl/docker-compose.runpod.yml down"
+fab ssh-runpod --cmd="docker compose -f /workspace/piper1-gpl/deploy/compose/docker-compose.runpod.yml down"
 ```
 
 ### Возобновление:
 
 ```bash
 # Чекпоинт автоматически загрузится из S3
-fab ssh-runpod --cmd="docker compose -f /workspace/piper1-gpl/docker-compose.runpod.yml up -d"
+fab ssh-runpod --cmd="docker compose -f /workspace/piper1-gpl/deploy/compose/docker-compose.runpod.yml up -d"
 ```
 
 ---
@@ -245,7 +245,7 @@ fab ssh-runpod --cmd="top"
 ### 4. Используйте tmpfs для кеша (если достаточно RAM)
 
 ```yaml
-# В docker-compose.runpod.yml добавьте:
+# В deploy/compose/docker-compose.runpod.yml добавьте:
 volumes:
   - type: tmpfs
     target: /data/.cache

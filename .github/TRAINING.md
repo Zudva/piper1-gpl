@@ -52,7 +52,7 @@ source .venv/bin/activate
 EXPORT_ONLY=1 \
 CHECKPOINT=/workspace/piper1-gpl/lightning_logs/version_2/checkpoints/epoch=426-step=202398.ckpt \
 OUTPUT_FILE=/workspace/piper1-gpl/felix_mirage_epoch426.onnx \
-docker compose -f docker-compose.train.yml run --rm \
+docker compose -f deploy/compose/docker-compose.train.yml run --rm \
   -e EXPORT_ONLY -e CHECKPOINT -e OUTPUT_FILE piper-train
 ```
 

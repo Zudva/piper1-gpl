@@ -14,7 +14,7 @@
 ```bash
 cd /workspace/piper1-gpl
 source .venv/bin/activate
-python test_model.py
+python tools/inference/test_model.py
 ```
 
 Или напрямую:
@@ -31,7 +31,7 @@ echo "Привет, это тест" | python -m piper \
 ```bash
 cd /workspace/piper1-gpl
 source .venv/bin/activate
-python start_training.py
+python tools/runpod/start_training.py
 ```
 
 С параметрами:
@@ -42,6 +42,8 @@ python start_training.py \
   --max-epochs 1000
 ```
 
+(То же самое, но с новым путём: `python tools/runpod/start_training.py ...`)
+
 Возобновление с чекпоинта:
 ```bash
 python start_training.py \
@@ -50,16 +52,18 @@ python start_training.py \
   --num-gpus 2
 ```
 
+(То же самое, но с новым путём: `python tools/runpod/start_training.py ...`)
+
 ### Вариант 3: Bash скрипт
 
 ```bash
 source .venv/bin/activate
-bash train_local.sh
+bash tools/runpod/train_local.sh
 ```
 
 Параметры через переменные окружения:
 ```bash
-BATCH_SIZE=80 NUM_GPUS=2 MAX_EPOCHS=1000 bash train_local.sh
+BATCH_SIZE=80 NUM_GPUS=2 MAX_EPOCHS=1000 bash tools/runpod/train_local.sh
 ```
 
 ### Вариант 4: Прямой запуск Python CLI

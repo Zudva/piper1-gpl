@@ -162,7 +162,7 @@ python3-venv                        # Виртуальная среда
 
 ### Конфигурация PyTorch
 ```bash
-PyTorch 2.3.1 с CUDA 12.1           # Указано в docker-compose.train.yml
+PyTorch 2.3.1 с CUDA 12.1           # Указано в deploy/compose/docker-compose.train.yml
 Установка: pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu121
 ```
 
@@ -237,7 +237,7 @@ python -m piper.train fit \
 EXPORT_ONLY=1 \
 CHECKPOINT=/workspace/piper1-gpl/lightning_logs/version_2/checkpoints/epoch=426-step=202398.ckpt \
 OUTPUT_FILE=/workspace/piper1-gpl/felix_mirage_epoch426.onnx \
-docker compose -f docker-compose.train.yml run --rm \
+docker compose -f deploy/compose/docker-compose.train.yml run --rm \
   -e EXPORT_ONLY -e CHECKPOINT -e OUTPUT_FILE piper-train
 ```
 
@@ -354,7 +354,7 @@ source .venv/bin/activate
 ./train_resume.sh
 
 # Метод 2: Docker запуск (рекомендуется)
-docker compose -f docker-compose.train.yml up --rm piper-train
+docker compose -f deploy/compose/docker-compose.train.yml up --rm piper-train
 ```
 
 ### Параметры обучения
@@ -379,7 +379,7 @@ tensorboard --logdir /workspace/piper1-gpl/lightning_logs
 EXPORT_ONLY=1 \
 CHECKPOINT=/workspace/piper1-gpl/lightning_logs/version_2/checkpoints/epoch=NEW_EPOCH.ckpt \
 OUTPUT_FILE=/workspace/piper1-gpl/felix_mirage_epochNEW.onnx \
-docker compose -f docker-compose.train.yml run --rm -e EXPORT_ONLY -e CHECKPOINT -e OUTPUT_FILE piper-train
+docker compose -f deploy/compose/docker-compose.train.yml run --rm -e EXPORT_ONLY -e CHECKPOINT -e OUTPUT_FILE piper-train
 ```
 
 ### Тестирование после обучения

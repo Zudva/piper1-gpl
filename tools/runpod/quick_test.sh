@@ -1,10 +1,18 @@
 #!/bin/bash
 # Quick test script - runs inference with existing model
 
-source /workspace/piper1-gpl/.venv/bin/activate
+set -euo pipefail
 
-MODEL="felix_mirage_epoch749.onnx"
-CONFIG="felix_mirage_epoch749.onnx.json"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$REPO_ROOT"
+
+if [ -f ".venv/bin/activate" ]; then
+    # shellcheck disable=SC1091
+    source .venv/bin/activate
+fi
+
+MODEL="${MODEL_PATH:-felix_mirage_epoch749.onnx}"
+CONFIG="${CONFIG_PATH:-felix_mirage_epoch749.onnx.json}"
 
 if [ ! -f "$MODEL" ]; then
     echo "Error: Model not found: $MODEL"

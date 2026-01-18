@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$REPO_ROOT"
+
 # Настройки
 CHECKPOINT="${1:-lightning_logs/version_2/checkpoints/epoch=426-step=202398.ckpt}"
 DATA_DIR="${DATA_DIR:-/workspace/datasets/felix_mirage}"
@@ -15,6 +18,7 @@ echo ""
 # Активировать venv если нужно
 if [ -z "$VIRTUAL_ENV" ]; then
     echo "Активация venv..."
+    # shellcheck disable=SC1091
     source .venv/bin/activate
 fi
 

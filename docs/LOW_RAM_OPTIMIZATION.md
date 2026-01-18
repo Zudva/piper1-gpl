@@ -109,7 +109,7 @@ export ACCUM=2            # компенсировать через accumulation
 
 ### ImmersCloud 1 GPU
 
-`docker-compose.immerscloud.yml`:
+`deploy/compose/docker-compose.immerscloud.yml`:
 ```yaml
 environment:
   - BATCH_SIZE=24
@@ -383,4 +383,4 @@ fab start-training-immerscloud
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) — Общее руководство по деплою
 - [S3_INTEGRATION.md](S3_INTEGRATION.md) — S3 синхронизация
-- [docker-compose.immerscloud.yml](../docker-compose.immerscloud.yml) — Конфигурация для ImmersCloud
+- [deploy/compose/docker-compose.immerscloud.yml](../deploy/compose/docker-compose.immerscloud.yml) — Конфигурация для ImmersCloud

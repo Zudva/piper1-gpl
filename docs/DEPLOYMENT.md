@@ -177,7 +177,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u Zudva --password-stdin
 docker push ghcr.io/zudva/piper-train:latest
 
 # 2. На RunPod используйте образ напрямую
-# В docker-compose.runpod.yml уже указан ghcr.io/zudva/piper-train:latest
+# В deploy/compose/docker-compose.runpod.yml уже указан ghcr.io/zudva/piper-train:latest
 ```
 
 ### Вариант B: Загрузка образа из S3 (экономия трафика ghcr.io)
