@@ -1,0 +1,40 @@
+services:
+  piper-train:
+    image: nvcr.io/nvidia/pytorch:24.04-py3
+    runtime: nvidia
+    network_mode: host
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0,1
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    ipc: host
+    working_dir: /workspace/piper1-gpl
+    volumes:
+      - .:/workspace/piper1-gpl
+      - ${PIPER_DATA_DIR:-./datasets/felix_mirage}:/data
+      - piper-venv:/tmp/piper-venv
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        source /tmp/piper-venv/bin/activate
+        
+        python -m piper.train fit \
+          --data.config_path /data/config.json \
+          --data.voice_name felix_mirage \
+          --data.csv_path /data/metadata_2col.csv \
+          --data.audio_dir /data/wavs \
+          --model.sample_rate 22050 \
+          --data.espeak_voice ru \
+          --data.cache_dir /data/.cache \
+          --data.batch_size 16 \
+          --trainer.accelerator gpu \
+          --trainer.devices 2 \
+          --trainer.strategy ddp_find_unused_parameters_true \
+          --trainer.max_epochs 10000 \
+          --trainer.check_val_every_n_epoch 1 \
+          --ckpt_path /workspace/piper1-gpl/lightning_logs/version_2/checkpoints/epoch=426-step=202398.ckpt
+
+volumes:
+  piper-venv:
+    external: true
+    name: piper1-gpl_piper-venv

@@ -11,7 +11,7 @@
 
 ### Местоположение
 ```
-/media/zudva/git1/git/piper-training/datasets/felix_mirage/
+/workspace/datasets/felix_mirage/
 ```
 
 ### Статистика
@@ -101,7 +101,7 @@ trainer.accelerator=gpu            # ✓ GPU ускорение (CUDA 12.1)
 
 ### Основной чекпоинт
 ```
-/media/zudva/git1/git/piper1-gpl/lightning_logs/version_2/checkpoints/
+/workspace/piper1-gpl/lightning_logs/version_2/checkpoints/
 ├── epoch=426-step=202398.ckpt        (807 MB, готов к resume)
 ```
 
@@ -190,8 +190,8 @@ ipc: host                                 # ✓ IPC для быстрых ком
 ```yaml
 volumes:
   - .:/workspace/piper1-gpl              # Рабочая папка проекта
-  - /media/zudva/git1/git/piper-training/datasets/felix_mirage:/data  # Датасет ✓
-  - /media/zudva/git1/git/piper/checkpoints:/checkpoints:ro  # Чекпоинты (read-only)
+  - ${DATA_DIR:-/workspace/datasets/felix_mirage}:/data  # Датасет ✓
+  - ${CHECKPOINTS_DIR:-/workspace/checkpoints}:/checkpoints:ro  # Чекпоинты (read-only)
   - piper-venv:/tmp/piper-venv           # Виртуальная среда (persistent)
 ```
 
@@ -347,7 +347,7 @@ VITS Генератор (SynthesizerTrn)
 ### Быстрый старт
 ```bash
 # Перейти в директорию проекта
-cd /media/zudva/git1/git/piper1-gpl
+cd /workspace/piper1-gpl
 
 # Метод 1: Локальный старт (если окружение готово)
 source .venv/bin/activate
@@ -369,7 +369,7 @@ docker compose -f docker-compose.train.yml up --rm piper-train
 ### Мониторинг прогресса
 ```bash
 # В отдельном терминале
-tensorboard --logdir /media/zudva/git1/git/piper1-gpl/lightning_logs
+tensorboard --logdir /workspace/piper1-gpl/lightning_logs
 # Откройте http://localhost:6006
 ```
 

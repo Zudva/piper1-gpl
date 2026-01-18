@@ -34,7 +34,7 @@ services:
       - .:/workspace/piper1-gpl
       - ./lightning_logs:/workspace/piper1-gpl/lightning_logs
       # Датасет felix_mirage (замапить на хосте на актуальный путь)
-      - /media/zudva/git1/git/piper-training/datasets/felix_mirage:/data
+      - ${PIPER_DATA_DIR:-./datasets/felix_mirage}:/data
     working_dir: /workspace/piper1-gpl
     deploy:
       resources:

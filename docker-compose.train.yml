@@ -18,8 +18,8 @@ services:
     working_dir: /workspace/piper1-gpl
     volumes:
       - .:/workspace/piper1-gpl
-      - /media/zudva/git1/git/piper-training/datasets/felix_mirage:/data
-      - /media/zudva/git1/git/piper/checkpoints:/checkpoints:ro
+      - ${PIPER_DATA_DIR:-./datasets/felix_mirage}:/data
+      - ${PIPER_CHECKPOINTS_DIR:-./checkpoints}:/checkpoints:ro
       - piper-venv:/tmp/piper-venv
     entrypoint: ["/bin/bash", "-c"]
     command:

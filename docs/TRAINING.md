@@ -33,6 +33,8 @@ python3 setup.py build_ext --inplace
 
 To train, you must have a CSV file with `|` as a delimiter and the format:
 
+See [DATASET_LAYOUT.md](DATASET_LAYOUT.md) for the canonical dataset directory structure.
+
 ``` csv
 utt1.wav|Text for utterance 1.
 utt2.wav|Text for utterance 2.

@@ -21,3 +21,32 @@ src/piper/train/vits/monotonic_align/core.c
 
 lightning_logs/
 .env
+
+# Local editor
+.vscode/
+
+# Local dataset mounts/copies (do not commit)
+datasets/
+
+# Large artifacts / exports
+*.onnx
+*.onnx.json
+piper-train-latest.tar.gz
+
+# Test outputs
+test_audio_output/
+test_audio_epoch*/
+test_output/
+test_variations*/
+test_variations_ru/
+test_*.wav
+test_*.json
+test_*.srt
+test_*.vtt
+test_*.tsv
+test_*.txt
+sample.txt
+
+# Validation reports (generated)
+reports/validation_*.md
+reports/validation_*.tsv
