@@ -8,6 +8,8 @@ tmp/
 build
 htmlcov
 
+__pycache__/
+
 dist/
 local/
 .venv/
@@ -21,6 +23,8 @@ src/piper/train/vits/monotonic_align/core.c
 
 lightning_logs/
 .env
+.env.*
+!.env.example
 
 # Local editor
 .vscode/
@@ -31,7 +35,16 @@ datasets/
 # Large artifacts / exports
 *.onnx
 *.onnx.json
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.npy
+*.npz
 piper-train-latest.tar.gz
+
+# Local artifacts bucket (human-managed)
+local/artifacts/
 
 # Test outputs
 test_audio_output/

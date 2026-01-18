@@ -1,0 +1,36 @@
+# Normalize line endings across platforms
+* text=auto eol=lf
+
+# Common text formats
+*.py        text eol=lf
+*.sh        text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.json      text eol=lf
+*.txt       text eol=lf
+Dockerfile  text eol=lf
+
+# Treat large/binary artifacts as binary (no text conversion, no diffs)
+*.onnx      -text -diff
+*.ckpt      -text -diff
+*.pt        -text -diff
+*.pth       -text -diff
+*.safetensors -text -diff
+*.npy       -text -diff
+*.npz       -text -diff
+*.wav       -text -diff
+*.mp3       -text -diff
+*.flac      -text -diff
+*.ogg       -text -diff
+*.zip       -text -diff
+*.tar       -text -diff
+*.gz        -text -diff
+*.7z        -text -diff
+
+# Images
+*.png       -text -diff
+*.jpg       -text -diff
+*.jpeg      -text -diff
+*.svg       text eol=lf
