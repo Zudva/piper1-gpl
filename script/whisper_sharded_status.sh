@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPORT_DIR="${1:-/media/zudva/git1/git/piper-training/datasets/felix_mirage_prepared_sr22050_seg15/reports/validation_whisper_sharded_largev3_20260118_075419}"
+REPORT_DIR="${1:-}"
+
+if [[ -z "$REPORT_DIR" ]]; then
+  echo "Usage: $0 <REPORT_DIR>"
+  echo "Example: $0 ../piper-training/datasets/felix_mirage_prepared_sr22050_seg15/reports/validation_whisper_sharded_rich_YYYYMMDD_HHMMSS"
+  exit 1
+fi
 
 if [[ ! -d "$REPORT_DIR" ]]; then
   echo "Report dir not found: $REPORT_DIR"
