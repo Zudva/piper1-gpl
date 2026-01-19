@@ -8,6 +8,7 @@ import csv
 import json
 import re
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from difflib import SequenceMatcher
@@ -86,23 +87,82 @@ def check_audio_info(wav_path: Path, expected_sr: int | None):
     }
 
 
-def whisper_transcribe(wav_path: Path, model_name: str, device: str):
-    try:
+_WHISPER_MODEL_CACHE: dict[tuple[str, str, str, str], object] = {}
+
+
+def _load_whisper_model(backend: str, model_name: str, device: str, compute_type: str):
+    key = (backend, model_name, device, compute_type)
+    if key in _WHISPER_MODEL_CACHE:
+        return _WHISPER_MODEL_CACHE[key]
+
+    if backend == "faster-whisper":
         from faster_whisper import WhisperModel  # type: ignore
-        model = WhisperModel(model_name, device=device)
-        segments, _ = model.transcribe(str(wav_path))
+
+        model = WhisperModel(model_name, device=device, compute_type=compute_type)
+    elif backend == "whisper":
+        import whisper  # type: ignore
+
+        model = whisper.load_model(model_name, device=device)
+    else:
+        raise RuntimeError(f"Unknown whisper backend: {backend}")
+
+    _WHISPER_MODEL_CACHE[key] = model
+    return model
+
+
+def _select_whisper_backend(preferred: str) -> str:
+    if preferred in {"whisper", "faster-whisper"}:
+        return preferred
+    # auto
+    try:
+        import faster_whisper  # type: ignore  # noqa: F401
+
+        return "faster-whisper"
+    except Exception:
+        return "whisper"
+
+
+def whisper_transcribe(
+    wav_path: Path,
+    *,
+    backend: str,
+    model,
+    device: str,
+    language: str | None,
+    batch_size: int,
+    num_workers: int,
+    beam_size: int,
+    vad_filter: bool,
+):
+    if backend == "faster-whisper":
+        kwargs = {
+            "beam_size": beam_size,
+            "language": language,
+            "vad_filter": vad_filter,
+        }
+        if batch_size > 0:
+            kwargs["batch_size"] = batch_size
+        if num_workers > 0:
+            kwargs["num_workers"] = num_workers
+        try:
+            segments, _ = model.transcribe(str(wav_path), **kwargs)
+        except TypeError:
+            # fallback for older faster-whisper versions
+            kwargs.pop("batch_size", None)
+            kwargs.pop("num_workers", None)
+            segments, _ = model.transcribe(str(wav_path), **kwargs)
         text = " ".join(seg.text for seg in segments)
         return text.strip()
-    except Exception:
-        pass
 
-    try:
-        import whisper  # type: ignore
-        model = whisper.load_model(model_name, device=device)
-        result = model.transcribe(str(wav_path), fp16=(device == "cuda"))
+    if backend == "whisper":
+        result = model.transcribe(
+            str(wav_path),
+            fp16=(device == "cuda"),
+            language=language,
+        )
         return (result.get("text") or "").strip()
-    except Exception as exc:
-        raise RuntimeError("Whisper backend not available") from exc
+
+    raise RuntimeError("Whisper backend not available")
 
 
 def main():
@@ -117,6 +177,30 @@ def main():
     parser.add_argument("--whisper-device", default="cuda")
     parser.add_argument("--require-whisper", action="store_true")
     parser.add_argument("--report-dir", default="reports")
+    parser.add_argument(
+        "--whisper-backend",
+        choices=["auto", "faster-whisper", "whisper"],
+        default="auto",
+        help="Whisper backend preference.",
+    )
+    parser.add_argument("--whisper-language", default=None, help="Force whisper language (e.g. ru)")
+    parser.add_argument("--whisper-batch-size", type=int, default=8, help="Batch size for faster-whisper")
+    parser.add_argument("--whisper-num-workers", type=int, default=2, help="Num workers for faster-whisper")
+    parser.add_argument("--whisper-compute-type", default="float16", help="Compute type for faster-whisper")
+    parser.add_argument("--whisper-beam-size", type=int, default=5, help="Beam size for whisper decoding")
+    parser.add_argument("--whisper-vad-filter", action="store_true", help="Enable VAD filter for faster-whisper")
+    parser.add_argument(
+        "--progress-every",
+        type=int,
+        default=0,
+        help="Print progress every N rows (0 disables).",
+    )
+    parser.add_argument(
+        "--progress-mode",
+        choices=["none", "count", "whisper", "all"],
+        default="none",
+        help="Progress verbosity: count prints periodic counters; whisper prints per-row whisper similarity; all prints both.",
+    )
     args = parser.parse_args()
 
     dataset = Path(args.dataset)
@@ -141,6 +225,7 @@ def main():
         expected_sr = config.get("audio", {}).get("sample_rate")
 
     metadata_rows = read_metadata(metadata_path) if metadata_path.exists() else []
+    total_rows = len(metadata_rows)
 
     wav_files = set(p.name for p in wavs_dir.glob("*.wav")) if wavs_dir.exists() else set()
 
@@ -152,7 +237,26 @@ def main():
     whisper_issues = []
     similarity_values = []
 
-    for row_num, wav_name, text, row_issue in metadata_rows:
+    start_time = time.time()
+    whisper_backend = None
+    whisper_model = None
+    if args.whisper:
+        whisper_backend = _select_whisper_backend(args.whisper_backend)
+        whisper_model = _load_whisper_model(
+            whisper_backend,
+            args.whisper_model,
+            args.whisper_device,
+            args.whisper_compute_type,
+        )
+
+    for idx, (row_num, wav_name, text, row_issue) in enumerate(metadata_rows, start=1):
+        if args.progress_mode in {"count", "all"} and args.progress_every and idx % args.progress_every == 0:
+            elapsed = int(time.time() - start_time)
+            rate = (idx / elapsed) if elapsed > 0 else 0.0
+            print(
+                f"[progress] {idx}/{total_rows} rows, {rate:.2f} rows/s, elapsed={elapsed}s",
+                flush=True,
+            )
         if row_issue:
             text_issues.append((row_num, wav_name, text, row_issue))
             continue
@@ -193,18 +297,37 @@ def main():
         # Whisper alignment
         if args.whisper:
             try:
-                hyp = whisper_transcribe(wav_path, args.whisper_model, args.whisper_device)
+                hyp = whisper_transcribe(
+                    wav_path,
+                    backend=whisper_backend,
+                    model=whisper_model,
+                    device=args.whisper_device,
+                    language=args.whisper_language,
+                    batch_size=args.whisper_batch_size,
+                    num_workers=args.whisper_num_workers,
+                    beam_size=args.whisper_beam_size,
+                    vad_filter=args.whisper_vad_filter,
+                )
                 sim = compute_similarity(normalize_text(text), normalize_text(hyp))
                 similarity_values.append(sim)
                 if sim < args.similarity_threshold:
                     whisper_issues.append((row_num, wav_name, text, f"low_similarity:{sim:.3f}"))
+                if args.progress_mode in {"whisper", "all"}:
+                    print(
+                        f"[whisper] {idx}/{total_rows} {wav_name} sim={sim:.3f}",
+                        flush=True,
+                    )
             except Exception as exc:
                 whisper_issues.append((row_num, wav_name, text, f"whisper_error:{exc}"))
+                if args.progress_mode in {"whisper", "all"}:
+                    print(
+                        f"[whisper] {idx}/{total_rows} {wav_name} error={exc}",
+                        flush=True,
+                    )
 
     extra_wav = sorted(wav_files - seen)
 
     # Summary
-    total_rows = len(metadata_rows)
     total_wavs = len(wav_files)
     missing_count = len(missing_wav)
     duplicate_count = len(duplicate_wav)

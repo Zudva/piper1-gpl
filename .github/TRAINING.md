@@ -76,6 +76,16 @@ python test_onnx_variations.py \
 Проект настроен на автоматическое использование venv из `.venv`.  
 На RunPod обычно путь будет `/workspace/piper1-gpl/.venv`, локально — путь зависит от вашей рабочей директории.
 
+## Interactive Runs (обязательно)
+
+Для долгих задач (особенно Whisper‑валидации) используйте **только** интерактивные скрипты с живым прогрессом.
+См. [Interactive Runs](INTERACTIVE_RUNS.md).
+
+## Готовность датасета (pipeline)
+
+- Стандартный pipeline проверок: [Dataset Readiness Pipeline](DATASET_READINESS_PIPELINE.md)
+- Текущее состояние/хэнд‑офф: [Project Status](PROJECT_STATUS.md)
+
 ## Мониторинг обучения
 
 ```bash
