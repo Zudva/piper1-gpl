@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Cutlist Review UI",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/script/cutlist_review_ui.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--cutlist",
+                "/media/zudva/git1/git/piper-training/datasets/felix_mirage_v2_work/alignment/cutlist.jsonl",
+                "--audio-root",
+                "/media/zudva/git1/git/nik-v-local-talking-llm/actors/felix_mirage/datasets/elevenlabs/zWSsRd3J6WyZFl12aGMB",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "7860",
+                "--log-file",
+                "${workspaceFolder}/cutlist_review_ui.log"
+            ]
+        }
+    ]
+}
