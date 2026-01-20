@@ -49,6 +49,7 @@ Output (suggested):
 Steps:
 
 - [ ] Decide alignment/matching strategy when manifest text != spoken transcript.
+- [ ] Use `script/felix_mirage_v2_align_whisperx.py` to generate a first cutlist on a small sample.
 - [ ] Generate a cutlist with `{src_audio, start, end, text}`.
 - [ ] Spot-check alignment on at least 10 random entries.
 

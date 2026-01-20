@@ -131,6 +131,22 @@ Why WhisperX:
 Important note:
 - WhisperX aligns words for its recognized transcript. If the manifest text significantly differs from spoken audio, include a matching step (text normalization + fuzzy matching) between "desired chunks" and ASR transcript.
 
+### Implementation (script)
+
+Stage B script (this repo):
+
+- `script/felix_mirage_v2_align_whisperx.py`
+
+Suggested dry-run (limits work):
+
+```bash
+python script/felix_mirage_v2_align_whisperx.py \
+  --to-align piper-training/datasets/felix_mirage_v2_work/to_align.sample20.json \
+  --audio-root nik-v-local-talking-llm/actors/felix_mirage/datasets/elevenlabs/zWSsRd3J6WyZFl12aGMB/ \
+  --out piper-training/datasets/felix_mirage_v2_work/alignment/cutlist.sample20.jsonl \
+  --limit 2 --dry-run
+```
+
 Expected artifacts (suggested):
 
 - `piper-training/datasets/felix_mirage_v2_work/alignment/` (work dir)
