@@ -125,3 +125,6 @@ python script/run_whisper_validate_rich.py \
 ## Where we record the latest state
 - Project handoff / current status: `.github/PROJECT_STATUS.md`
 - Interactive run policy: `.github/INTERACTIVE_RUNS.md`
+
+## Запуск команд
+- Никакие команды не запускаются скрыто. Перед запуском требуется явное указание запуска и краткое описание.

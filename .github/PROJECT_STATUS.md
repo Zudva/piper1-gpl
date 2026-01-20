@@ -87,3 +87,6 @@ python script/run_whisper_validate_rich.py \
 - [ ] Stage 2 quality report created and reviewed
 - [ ] Stage 3 Whisper validation completed and report path recorded
 - [ ] Stage 4 mini-train sanity check (optional)
+
+## Запуск команд
+- Никакие команды не запускаются скрыто. Перед запуском требуется явное указание запуска и краткое описание.

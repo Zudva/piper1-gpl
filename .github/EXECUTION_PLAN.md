@@ -275,3 +275,6 @@ source .venv/bin/activate
 - [ ] Phase 5 (Deployment)
 
 **Next Action:** Execute Phase 1 (Quality Report) command and review artifacts.
+
+## Запуск команд
+- Никакие команды не запускаются скрыто. Перед запуском требуется явное указание запуска и краткое описание.

@@ -42,3 +42,6 @@ A Gradio-based tool for manually reviewing and correcting dataset alignment (`cu
 
 - **Fixing Alignment**: Use the UI to fill in missing text or correct timestamps for `unmatched` entries.
 - **Training**: Refer to `TRAINING_RU.md` or `docker-compose.train.yml` for training commands.
+
+## Запуск команд
+- Никакие команды не запускаются скрыто. Перед запуском требуется явное указание запуска и краткое описание.

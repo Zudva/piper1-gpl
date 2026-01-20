@@ -37,3 +37,6 @@ python script/run_whisper_validate_rich.py \
 - The Rich UI is required so the user can see progress. This is mandatory for Whisper validations.
 - Reports are written under: `<dataset>/reports/validation_whisper_sharded_rich_YYYYMMDD_HHMMSS/`.
 - You can adjust `--workers-per-gpu`, `--whisper-batch-size`, and `--whisper-num-workers` to trade speed vs VRAM.
+
+## Запуск команд
+- Никакие команды не запускаются скрыто. Перед запуском требуется явное указание запуска и краткое описание.
