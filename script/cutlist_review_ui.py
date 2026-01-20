@@ -26,12 +26,46 @@ import os
 from pathlib import Path
 from typing import Any
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
+import numpy as np
 import gradio as gr  # type: ignore
 
 def _log(msg: str) -> None:
     ts = time.strftime("%H:%M:%S")
     print(f"[{ts}] {msg}")
     logging.info(msg)
+
+
+def _generate_spectrogram(sr: int, data: np.ndarray):
+    """Generates a matplotlib figure of the mel spectrogram."""
+    if data is None or sr is None:
+        return None
+    try:
+        # data is (samples,) or (samples, channels)
+        if len(data.shape) > 1:
+            y = data.mean(axis=1) # mix to mono
+        else:
+            y = data
+        
+        # Compute mel spectrogram
+        # fmax=8000 is good for speech
+        S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+        S_dB = librosa.power_to_db(S, ref=np.max)
+        
+        # Create figure
+        fig, ax = plt.subplots(figsize=(10, 3))
+        img = librosa.display.specshow(S_dB, x_axis='time', y_axis='mel', sr=sr, fmax=8000, ax=ax)
+        fig.colorbar(img, ax=ax, format='%+2.0f dB')
+        plt.tight_layout()
+        
+        return fig
+    except Exception as e:
+        _log(f"Spectrogram generation failed: {e}")
+        return None
 
 
 try:
@@ -396,6 +430,12 @@ def main() -> int:
 
         _log(f"Segment times: start={start_s}, end={end_s}")
         audio_value = _load_audio_value(audio_path, start_s, end_s)
+        
+        # Generate spectrogram
+        spectrogram_fig = None
+        if audio_value is not None:
+             spectrogram_fig = _generate_spectrogram(audio_value[0], audio_value[1])
+
         text = str(r.get("text") or "")
         text_orig = str(r.get("_text_orig") or "")
         
@@ -419,25 +459,26 @@ def main() -> int:
         return (
             progress_label,     # 1
             audio_value,       # 2
-            reason_info,       # 3
-            text,              # 4
-            text_orig,         # 5
-            verdict,           # 6
-            note,              # 7
-            pos,               # 8
-            dropdown_val,      # 9 (for dropdown value)
-            audio_path,        # 10
-            start_s,           # 11
-            end_s              # 12
+            spectrogram_fig,   # 3 (NEW)
+            reason_info,       # 4
+            text,              # 5
+            text_orig,         # 6
+            verdict,           # 7
+            note,              # 8
+            pos,               # 9
+            dropdown_val,      # 10
+            audio_path,        # 11
+            start_s,           # 12
+            end_s              # 13
         )
 
     def _get_ui_update(pos: int, status_msg: str):
         """Returns list of updates for all UI components."""
         _log(f"UI update: pos={pos}, status='{status_msg}'")
-        data = _get_item_data(pos) # 12 items
+        data = _get_item_data(pos) 
         
         # Unpack
-        (progress_label, audio_value, reason_info, text, text_orig, 
+        (progress_label, audio_value, spectrogram_fig, reason_info, text, text_orig, 
          verdict, note, pos_val, dropdown_val, audio_path, start_s, end_s) = data
 
         new_choices = _get_choices()
@@ -446,6 +487,7 @@ def main() -> int:
         return [
             progress_label,
             audio_value,
+            spectrogram_fig,
             reason_info,
             text,
             text_orig,
@@ -566,6 +608,8 @@ def main() -> int:
                     )
                 )
                 
+                spectrogram_plot = gr.Plot(label="Mel Spectrogram", show_label=True)
+                
                 with gr.Row():
                      btn_transcribe = gr.Button("✨ Auto-Transcribe (Whisper)", size="sm", variant="secondary")
                 
@@ -593,7 +637,7 @@ def main() -> int:
         
         # Common outputs for page refreshes
         refresh_outputs = [
-            progress_md, audio_player, info_md, 
+            progress_md, audio_player, spectrogram_plot, info_md, 
             text_input, text_orig_disp, verdict_radio, note_input, 
             state_pos, nav_dropdown, status_msg, audio_path_state,
             start_state, end_state
