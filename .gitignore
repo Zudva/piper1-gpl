@@ -63,3 +63,4 @@ sample.txt
 # Validation reports (generated)
 reports/validation_*.md
 reports/validation_*.tsv
+backups/

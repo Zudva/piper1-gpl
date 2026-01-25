@@ -101,6 +101,7 @@ def _run_validator(
     require_whisper: bool,
     progress_every: int,
     progress_mode: str,
+    progress_detail: str,
     whisper_backend: str,
     whisper_language: str | None,
     whisper_batch_size: int,
@@ -128,6 +129,8 @@ def _run_validator(
         str(progress_every),
         "--progress-mode",
         progress_mode,
+        "--progress-detail",
+        progress_detail,
         "--whisper-backend",
         whisper_backend,
         "--whisper-batch-size",
@@ -180,6 +183,12 @@ def main() -> int:
         choices=["none", "count", "whisper", "all"],
         default="whisper",
         help="Progress verbosity passed to shard validators.",
+    )
+    parser.add_argument(
+        "--progress-detail",
+        choices=["basic", "text", "text+path"],
+        default="basic",
+        help="Whisper progress detail passed to shard validators.",
     )
     parser.add_argument("--workers-per-gpu", type=int, default=1, help="Number of validator processes per GPU.")
     parser.add_argument("--whisper-backend", choices=["auto", "faster-whisper", "whisper"], default="auto")
@@ -242,6 +251,7 @@ def main() -> int:
             require_whisper=args.require_whisper,
             progress_every=args.progress_every,
             progress_mode=args.progress_mode,
+            progress_detail=args.progress_detail,
             whisper_backend=args.whisper_backend,
             whisper_language=args.whisper_language,
             whisper_batch_size=args.whisper_batch_size,

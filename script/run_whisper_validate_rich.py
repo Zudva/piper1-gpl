@@ -162,6 +162,11 @@ def main() -> int:
         help="Progress mode: none|count|whisper|all.",
     )
     parser.add_argument(
+        "--progress-detail",
+        default="basic",
+        help="Whisper progress detail: basic|text|text+path.",
+    )
+    parser.add_argument(
         "--report-dir",
         default=None,
         help="Override report directory (default: <dataset>/reports/validation_whisper_sharded_rich_TIMESTAMP).",
@@ -212,6 +217,8 @@ def main() -> int:
         str(args.progress_every),
         "--progress-mode",
         args.progress_mode,
+        "--progress-detail",
+        args.progress_detail,
         "--report-dir",
         str(report_dir),
         "--require-whisper",

@@ -34,6 +34,9 @@ A Gradio-based tool for manually reviewing and correcting dataset alignment (`cu
 3.  **Logging**:
     - Use the custom `_log` function in scripts to ensure dual output to console and log files.
 
+5.  **Segment Handling**:
+    - When working with segmented audio or text, output/play only the segment, not the entire file.
+
 4.  **Hardware**:
     - Scripts are designed to run on a machine with NVIDIA RTX 3090.
     - Whisper models default to `device="cuda", compute_type="float16"`.
@@ -42,6 +45,21 @@ A Gradio-based tool for manually reviewing and correcting dataset alignment (`cu
 
 - **Fixing Alignment**: Use the UI to fill in missing text or correct timestamps for `unmatched` entries.
 - **Training**: Refer to `TRAINING_RU.md` or `docker-compose.train.yml` for training commands.
+
+## Felix Mirage v2 — Fixed Workflow (структурировано)
+
+- **Source of truth**: `nik-v-local-talking-llm/actors/felix_mirage/...` (не изменяем).
+- **Work artifacts**: `piper-training/datasets/felix_mirage_v2_work/` (можно удалять/пересоздавать).
+- **Final training dataset**: `piper-training/datasets/felix_mirage_v2_sr22050/`
+    - `wavs/*.wav` (mono, 22050 Hz, PCM_16)
+    - `metadata_2col.csv` (`wav|text`)
+    - `config.json` (`audio.sample_rate=22050`)
+
+Review UI policy:
+
+- Режим правки аудио в UI использует **backup-style** хранение: исправленные/обрезанные сегменты пишутся в `piper-training/datasets/felix_mirage_v2_work/audio_fixes/` с привязкой к родительскому `src_audio`.
+- Исходный датасет под `nik-v-local-talking-llm/actors/...` не изменяется.
+- Сборщик датасета (Phase 3) автоматически подхватывает `review.replaced_audio.new_audio_path` как источник сегмента.
 
 ## Запуск команд
 - Никакие команды не запускаются скрыто. Перед запуском требуется явное указание запуска и краткое описание.

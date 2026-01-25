@@ -131,26 +131,11 @@ Why WhisperX:
 Important note:
 - WhisperX aligns words for its recognized transcript. If the manifest text significantly differs from spoken audio, include a matching step (text normalization + fuzzy matching) between "desired chunks" and ASR transcript.
 
-### Implementation (script)
-
-Stage B script (this repo):
-
-- `script/felix_mirage_v2_align_whisperx.py`
-
-Suggested dry-run (limits work):
-
-```bash
-python script/felix_mirage_v2_align_whisperx.py \
-  --to-align piper-training/datasets/felix_mirage_v2_work/to_align.sample20.json \
-  --audio-root nik-v-local-talking-llm/actors/felix_mirage/datasets/elevenlabs/zWSsRd3J6WyZFl12aGMB/ \
-  --out piper-training/datasets/felix_mirage_v2_work/alignment/cutlist.sample20.jsonl \
-  --limit 2 --dry-run
-```
-
 Expected artifacts (suggested):
 
 - `piper-training/datasets/felix_mirage_v2_work/alignment/` (work dir)
   - `cutlist.jsonl` (or `.json`) with `{src_audio, start, end, text}`
+  - `to_align.json` (Stage A output, source-of-truth for text chunks)
   - logs and alignment debug outputs
 
 ## Phase 3 — Build final Piper dataset (sr22050)
@@ -166,6 +151,21 @@ Expected output layout:
 - `wavs/*.wav` (mono, 22050 Hz, PCM)
 - `metadata_2col.csv` (`wav|text`)
 - `config.json`
+
+Review UI policy:
+
+- Для ручной правки сегментов/замены аудио используйте `script/cutlist_review_ui.py`.
+- Исправленные сегменты сохраняются как **backup** в `piper-training/datasets/felix_mirage_v2_work/audio_fixes/` и не трогают `nik-v-local-talking-llm/actors/...`.
+- Phase 3 использует `review.replaced_audio.new_audio_path` как источник сегмента.
+
+### Segment build architecture (important)
+
+Phase 3 treats artifacts as:
+
+- `to_align.json` — **source of truth for text** (Stage A)
+- `cutlist.jsonl` — **time mapping** (Stage B): `{src_audio, start, end}` (text may exist but should be considered derived)
+
+When rebuilding the final dataset, prefer taking training text from `to_align.json` and use `cutlist.jsonl` only for timings. This prevents text drift when you correct Stage A text after the alignment was produced.
 
 ## Run policy (important)
 

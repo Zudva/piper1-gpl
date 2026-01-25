@@ -209,9 +209,19 @@ def main() -> int:
     parser.add_argument("--language", default="ru", help="Whisper language code")
     parser.add_argument("--sample-rate", type=int, default=22050, help="Target sample rate for output audio")
 
-    parser.add_argument("--min-seg-seconds", type=float, default=1.0)
+    parser.add_argument(
+        "--min-seg-seconds",
+        type=float,
+        default=2.0,
+        help="Drop segments shorter than this many seconds (default: 2.0)",
+    )
     parser.add_argument("--max-seg-seconds", type=float, default=15.0)
-    parser.add_argument("--min-text-chars", type=int, default=2)
+    parser.add_argument(
+        "--min-text-chars",
+        type=int,
+        default=6,
+        help="Drop segments with very short text (default: 6)",
+    )
     parser.add_argument("--max-text-chars", type=int, default=300)
 
     parser.add_argument("--limit-files", type=int, default=0, help="If >0, only process first N WAVs")

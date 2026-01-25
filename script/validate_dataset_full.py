@@ -201,6 +201,12 @@ def main():
         default="none",
         help="Progress verbosity: count prints periodic counters; whisper prints per-row whisper similarity; all prints both.",
     )
+    parser.add_argument(
+        "--progress-detail",
+        choices=["basic", "text", "text+path"],
+        default="basic",
+        help="Whisper progress detail: basic prints wav+sim; text adds reference text; text+path adds wav path.",
+    )
     args = parser.parse_args()
 
     dataset = Path(args.dataset)
@@ -313,17 +319,25 @@ def main():
                 if sim < args.similarity_threshold:
                     whisper_issues.append((row_num, wav_name, text, f"low_similarity:{sim:.3f}"))
                 if args.progress_mode in {"whisper", "all"}:
-                    print(
-                        f"[whisper] {idx}/{total_rows} {wav_name} sim={sim:.3f}",
-                        flush=True,
-                    )
+                    safe_text = text.replace("\t", " ")
+                    wav_rel = f"wavs/{wav_name}"
+                    detail = f"[whisper] {idx}/{total_rows} {wav_name} sim={sim:.3f}"
+                    if args.progress_detail in {"text", "text+path"}:
+                        detail += f" text=\"{safe_text}\""
+                    if args.progress_detail == "text+path":
+                        detail += f" path={wav_rel}"
+                    print(detail, flush=True)
             except Exception as exc:
                 whisper_issues.append((row_num, wav_name, text, f"whisper_error:{exc}"))
                 if args.progress_mode in {"whisper", "all"}:
-                    print(
-                        f"[whisper] {idx}/{total_rows} {wav_name} error={exc}",
-                        flush=True,
-                    )
+                    safe_text = text.replace("\t", " ")
+                    wav_rel = f"wavs/{wav_name}"
+                    detail = f"[whisper] {idx}/{total_rows} {wav_name} error={exc}"
+                    if args.progress_detail in {"text", "text+path"}:
+                        detail += f" text=\"{safe_text}\""
+                    if args.progress_detail == "text+path":
+                        detail += f" path={wav_rel}"
+                    print(detail, flush=True)
 
     extra_wav = sorted(wav_files - seen)
 

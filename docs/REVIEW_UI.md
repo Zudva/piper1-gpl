@@ -56,3 +56,9 @@ python script/cutlist_review_ui.py \
   --host 127.0.0.1 \
   --port 7860
 ```
+
+Примечание:
+
+*   `--audio-root` может указывать на **source of truth** (например, `nik-v-local-talking-llm/actors/...`).
+*   Для Replace/обрезки аудио UI сохраняет сегменты как **backup** в `piper-training/datasets/felix_mirage_v2_work/audio_fixes/` (внутри создаётся структура с указанием родителя и параметров правки).
+*   В `cutlist.jsonl` исходный `src_audio` не меняется: UI записывает `review.replaced_audio.new_audio_path`, а сборщик датасета использует его как источник сегмента.

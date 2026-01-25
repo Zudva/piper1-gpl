@@ -24,7 +24,7 @@ Input:
 - `nik-v-local-talking-llm/actors/felix_mirage/datasets/elevenlabs/<voice_id>/manifest.jsonl`
 
 Output:
-- `piper-training/datasets/felix_mirage_v2_work/to_align.json`
+- `piper-training/datasets/felix_mirage_v2_work/alignment/to_align.json`
 
 Steps:
 
@@ -49,7 +49,6 @@ Output (suggested):
 Steps:
 
 - [ ] Decide alignment/matching strategy when manifest text != spoken transcript.
-- [ ] Use `script/felix_mirage_v2_align_whisperx.py` to generate a first cutlist on a small sample.
 - [ ] Generate a cutlist with `{src_audio, start, end, text}`.
 - [ ] Spot-check alignment on at least 10 random entries.
 
@@ -71,6 +70,10 @@ Steps:
 - [ ] Cut audio per cutlist and write WAVs.
 - [ ] Write `metadata_2col.csv`.
 - [ ] Write `config.json` (audio.sample_rate=22050).
+
+Note:
+
+- If you continue editing Stage A text (`to_align.json`), ensure Phase 3 uses `to_align.json` as the text source (to avoid drift between `cutlist.jsonl` and `to_align.json`).
 
 Acceptance:
 - No clips are ~1.0s unless explicitly intended.
