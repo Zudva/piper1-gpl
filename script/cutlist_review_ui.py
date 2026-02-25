@@ -80,8 +80,8 @@ def _generate_spectrogram(sr: int, data: np.ndarray):
         # Generate HTML with unique ID and data-duration
         # The JS will look for .spectrogram-container and sync with audio
         html = f"""
-        <div class="spectrogram-container" data-duration="{duration}" style="position: relative; width: 100%; height: auto; margin-top: -10px;">
-            <img src="data:image/png;base64,{b64_img}" style="width: 100%; display: block; height: 150px; object-fit: cover;" />
+        <div class="spectrogram-container" data-duration="{duration}" style="position: relative; width: 100%; height: auto; margin-top: -10px; cursor: crosshair;">
+            <img src="data:image/png;base64,{b64_img}" style="width: 100%; display: block; height: 150px; object-fit: cover;" draggable="false" />
             <div class="seek-line" style="position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background-color: white; pointer-events: none; display: none;"></div>
         </div>
         """
@@ -513,21 +513,36 @@ def main() -> int:
         mark = "✓" if verdict else " "
         return f"{mark} [{i}] {status} (sim={sim_str})"
 
-    def _clamp_view(audio_path, start_v, end_v):
+    def _clamp_view(audio_path, start_v, end_v, context_pad=0.0):
         """Updates audio player and spectrogram based on start/end inputs without saving."""
         if not audio_path:
             return gr.update(), gr.update()
         
         # Ensure we have valid floats or None
         if start_v == 0 and end_v == 0:
-             # Interpreted as 'full file' if both 0? Or maybe just respect them.
-             # _load_audio_value treats None as 'boundary'. 0 is 0.
-             pass
-
-        val = _load_audio_value(audio_path, start_v, end_v)
-        if val is None:
-             return gr.update(), gr.update()
+            pass
+            
+        # Apply padding if requested, but respect file boundaries (0)
+        actual_start = start_v
+        actual_end = end_v
         
+        if start_v is not None:
+            actual_start = max(0, float(start_v) - float(context_pad))
+        else:
+            # If no start defined, context pad means "start from beginning" probably
+            # but _load_audio_value processes None as "start of file"
+            pass 
+
+        if end_v is not None:
+            # If end is defined, extend it
+            # But _load_audio_value needs to check file duration to clamp upper bound? 
+            # _load_audio_value does checking against total_frames.
+            actual_end = float(end_v) + float(context_pad)
+
+        val = _load_audio_value(audio_path, actual_start, actual_end)
+        if val is None:
+            return gr.update(), gr.update()
+
         sr, data = val
         spec_html = _generate_spectrogram(sr, data)
         return (sr, data), spec_html
@@ -944,6 +959,26 @@ def main() -> int:
             if (audio) {
                 // Determine if we need to hook (or re-hook if elements changed)
                 const isHooked = audio._isSyncHooked;
+
+                // --- CLICK TO SEEK (Check if we need to attach onclick) ---
+                if (container && !container._isClickHooked) {
+                    container.onclick = (e) => {
+                        const rect = container.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const w = rect.width;
+                        if (w > 0) {
+                             const duration = parseFloat(container.dataset.duration) || audio.duration;
+                             if (duration > 0) {
+                                 const seekTime = (x / w) * duration;
+                                 if (Number.isFinite(seekTime)) {
+                                     audio.currentTime = seekTime;
+                                     audio.play(); // Optional: play on seek
+                                 }
+                             }
+                        }
+                    };
+                    container._isClickHooked = true;
+                }
                 
                 // If hooked, we still run the update loop via animation frame, 
                 // but we also need to efficiently update karaoke even if we are "hooked".
@@ -1109,7 +1144,8 @@ def main() -> int:
                     with gr.Row():
                         start_input = gr.Number(label="start (sec)", precision=3)
                         end_input = gr.Number(label="end (sec)", precision=3)
-                        btn_clamp = gr.Button("🔍 Clamp View", variant="secondary", scale=0)
+                        btn_clamp = gr.Button("🔍 Focus", variant="secondary", scale=0)
+                        btn_context = gr.Button("🔍 +2s", variant="secondary", scale=0)
                     with gr.Row():
                         btn_drop = gr.Button("🗑️ Drop segment (exclude from training)", size="sm", variant="secondary")
                     btn_replace_audio = gr.Button(
@@ -1167,6 +1203,13 @@ def main() -> int:
 
         btn_clamp.click(
             fn=_clamp_view,
+            inputs=[audio_path_state, start_input, end_input],
+            outputs=[audio_player, spectrogram_html]
+        )
+        
+        # Context button adds 2s padding (on both sides)
+        btn_context.click(
+            fn=lambda p, s, e: _clamp_view(p, s, e, 2.0),
             inputs=[audio_path_state, start_input, end_input],
             outputs=[audio_player, spectrogram_html]
         )
